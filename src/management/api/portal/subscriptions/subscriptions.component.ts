@@ -18,6 +18,7 @@ import ApiService from "../../../../services/api.service";
 import NotificationService from "../../../../services/notification.service";
 import { PagedResult } from "../../../../entities/pagedResult";
 import { StateService } from '@uirouter/core';
+import * as moment from 'moment';
 
 export class SubscriptionQuery {
   status?: string[] = ['ACCEPTED', 'PENDING', 'PAUSED'];
@@ -61,6 +62,10 @@ const ApiSubscriptionsComponent: ng.IComponentOptions = {
       'ngInject';
 
       this.onPaginate = this.onPaginate.bind(this);
+    }
+
+    $onInit() {
+      this.getSubscriptionAnalytics();
     }
 
     onPaginate(page) {
@@ -108,7 +113,33 @@ const ApiSubscriptionsComponent: ng.IComponentOptions = {
 
       this.ApiService.getSubscriptions(this.api.id, query).then((response) => {
         this.subscriptions = response.data as PagedResult;
+
+        this.getSubscriptionAnalytics();
       });
+    }
+
+    getSubscriptionAnalytics() {
+      if (this.subscriptions.data && this.subscriptions.data.length) {
+        this.ApiService.analytics(this.api.id,{
+          type: 'date_histo',
+          aggs: 'field:subscription',
+          interval: 43200000,
+          from: moment().subtract(1, 'months').valueOf(),
+          to: moment().valueOf()
+        }).then((result) => {
+          if (result.data.values && result.data.values.length) {
+            _.forEach(this.subscriptions.data, (subscription) => {
+              subscription.chartData = {
+                series: [{
+                  data: _.find(result.data.values[0].buckets, (bucket) => {
+                    return bucket.name === subscription.id;
+                  }).data
+                }]
+              };
+            });
+          }
+        });
+      }
     }
 
     showAddSubscriptionModal() {
