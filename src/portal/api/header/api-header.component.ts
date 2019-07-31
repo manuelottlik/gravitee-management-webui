@@ -20,8 +20,7 @@ const ApiHeaderComponent: ng.IComponentOptions = {
   bindings: {
     api: '<',
     apiRatingSummary: '<',
-    apiPortalHeaders: '<',
-    entrypoints: '<'
+    apiPortalHeaders: '<'
   },
   template: require('./api-header.html'),
   controller: function (
@@ -45,8 +44,6 @@ const ApiHeaderComponent: ng.IComponentOptions = {
     });
 
     this.$onInit = () => {
-      this.resolvedEntrypoints = ApiService.getTagEntrypoints(this.api, this.entrypoints);
-
       $timeout(function () {
 
         const apiNavbar = document.getElementById("api-navbar");
